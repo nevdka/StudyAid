@@ -5,8 +5,21 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StudyAid"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="208.237" Width="467.345">
     <Grid>
-        
+        <Label Content="Select Picture" HorizontalAlignment="Left" Height="26" Margin="5,0,0,0" VerticalAlignment="Top" Width="104"/>
+        <TextBox x:Name="tbPicturePath" HorizontalAlignment="Left" Height="20" Margin="5,26,0,0" TextWrapping="NoWrap" VerticalAlignment="Top" Width="220" IsReadOnly="True"/>
+        <Button x:Name="btnBrowsePicture" Content="Browse" HorizontalAlignment="Left" Height="20" Margin="225,26,0,0" VerticalAlignment="Top" Width="46" Click="btnBrowsePicture_Click"/>
+
+        <Label Content="Select Text File" HorizontalAlignment="Left" Height="26" Margin="5,60,0,0" VerticalAlignment="Top" Width="104"/>
+        <TextBox x:Name="tbTextFilePath" HorizontalAlignment="Left" Height="20" Margin="5,86,0,0" TextWrapping="NoWrap" VerticalAlignment="Top" Width="220" IsReadOnly="True"/>
+        <Button x:Name="btnBrowseTextFile" Content="Browse" HorizontalAlignment="Left" Height="20" Margin="225,86,0,0" VerticalAlignment="Top" Width="46" Click="btnBrowseTextFile_Click"/>
+
+        <Label Content="Goal Time (h:mm)" HorizontalAlignment="Left" Height="26" Margin="5,120,0,0" VerticalAlignment="Top" Width="104"/>
+        <TextBox x:Name="tbTime" HorizontalAlignment="Left" Height="20" Margin="5,146,0,0" TextWrapping="NoWrap" VerticalAlignment="Top" Width="104" Text="1:30" TextAlignment="Center" LostFocus="tbTime_LostFocus"/>
+        <Button x:Name="btnStart" Content="Start" HorizontalAlignment="Left" Height="20" Margin="225,146,0,0" VerticalAlignment="Top" Width="46" IsDefault="True" Click="btnStart_Click" IsEnabled="False"/>
+        <Image x:Name="imPicture" HorizontalAlignment="Left" Height="156" Margin="280,10,0,0" VerticalAlignment="Top" Width="171"/>
+        <CheckBox x:Name="cbUseText" Content="CheckBox" HorizontalAlignment="Left" Height="20" Margin="161,146,0,0" VerticalAlignment="Top" Width="14"/>
+        <Label Content="Use text file" HorizontalAlignment="Left" Height="26" Margin="133,120,0,0" VerticalAlignment="Top" Width="104"/>
     </Grid>
 </Window>
