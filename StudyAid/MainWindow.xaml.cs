@@ -29,37 +29,39 @@ namespace StudyAid
 
     public partial class MainWindow : Window
     {
-        private int time;
+        public int GoalTime { get; set; }
+        public int PopUpTime { get; set; }
 
         private ConfigSettings config;
         private NameValueCollection appSettings;
-        private DispatcherTimer dispatcherTimer;
 
-        private int percentComplete;
         private List<string> messages;
         private Random rand = new Random();
+
+        public ImageSource source { set; get; }
 
 
         public MainWindow()
         {
-            InitializeComponent();
-
             appSettings = ConfigurationManager.AppSettings;
-
             config = new ConfigSettings()
             {
-                imageFileName = appSettings["ImageFilePath"],
-                textFileName = appSettings["TextFilePath"],
-                time = appSettings["Time"]
+                ImageFileName = appSettings["ImageFilePath"],
+                TextFileName = appSettings["TextFilePath"],
+                GoalTime = appSettings["GoalTime"],
+                PopUpTime = appSettings["PopUpTime"],
+                UsePercentages = false,
+                StudyMode = false,
+                UseRandomText = true
             };
+            InitializeComponent();
 
-            tbPicturePath.Text = config.imageFileName;
-            tbTextFilePath.Text = config.textFileName;
-            tbTime.Text = config.time;
-            loadImage(config.imageFileName);
+            tbPicturePath.Text = config.ImageFileName;
+            tbTextFilePath.Text = config.TextFileName;
+            tbTime.Text = config.GoalTime;
+            loadImage(config.ImageFileName);
             checkIfEverythingIsValid();
 
-            percentComplete = 0;
         }
 
         private void btnBrowsePicture_Click( object sender, RoutedEventArgs e )
@@ -96,7 +98,8 @@ namespace StudyAid
             // All good. Set the path.
             tbPicturePath.Text = fileName;
             imPicture.Source = image;
-            config.imageFileName = tbPicturePath.Text;
+            config.ImageFileName = tbPicturePath.Text;
+            source = image;
         }
 
         private void btnBrowseTextFile_Click( object sender, RoutedEventArgs e )
@@ -111,8 +114,7 @@ namespace StudyAid
                 try
                 {
                     tbTextFilePath.Text = openFileDialog.FileName;
-                    config.textFileName = tbTextFilePath.Text;
-                    messages = new List<string>( File.ReadAllLines( config.textFileName ) );
+                    config.TextFileName = tbTextFilePath.Text;
                 }
                 catch (Exception ex)
                 {
@@ -128,49 +130,30 @@ namespace StudyAid
             // update config
             var configFile = ConfigurationManager.OpenExeConfiguration( ConfigurationUserLevel.None );
             var settings = configFile.AppSettings.Settings;
-            settings["ImageFilePath"].Value = config.imageFileName;
-            settings["TextFilePath"].Value = config.textFileName;
-            settings["Time"].Value = config.time;
+            settings["ImageFilePath"].Value = config.ImageFileName;
+            settings["TextFilePath"].Value = config.TextFileName;
+            settings["GoalTime"].Value = config.GoalTime;
+            settings["PopUpTime"].Value = config.PopUpTime;
             configFile.Save( ConfigurationSaveMode.Modified );
             ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
 
-            messages = new List<string>( File.ReadAllLines( config.textFileName ) );
+            messages = new List<string>( File.ReadAllLines( config.TextFileName ) );
 
             Visibility = Visibility.Hidden;
-            ShowInTaskbar = false;
 
-            dispatcherTimer = new DispatcherTimer();
-            dispatcherTimer.Tick += new EventHandler( dispatcherTimer_Tick );
-            dispatcherTimer.Interval = new TimeSpan( 0, time, 0);
-            dispatcherTimer.Start();
+
+            openWindow();
         }
 
-        private void dispatcherTimer_Tick(object sender, EventArgs e )
+        private void openWindow()
         {
-            bool last = false;
-            string messageText = "";
-
-            if (cbUseText.IsChecked == true )
-            {
-                int index = rand.Next( messages.Count );
-                messageText = messages[index];
-            }
-            else
-            {
-                percentComplete += 25;
-                if (percentComplete >= 100 )
-                {
-                    last = true;
-                    dispatcherTimer.Stop();
-                }
-                messageText = $"{percentComplete}% done!";
-            }
-            new Window1( imPicture.Source, messageText, last).Show();
+            new Window1( this, config ).Show();
         }
 
         private void checkIfEverythingIsValid()
         {
             parseTimeToMinutes();
+            ParsePopUpTime();
             if(validateTime() && validateImage() && validateTextFile() )
             {
                 btnStart.IsEnabled = true;
@@ -200,7 +183,7 @@ namespace StudyAid
 
         private bool validateTime()
         {
-            if ( time > 0 )
+            if ( GoalTime > 0 )
                 return true;
             else
                 return false;
@@ -208,18 +191,61 @@ namespace StudyAid
 
         private void parseTimeToMinutes()
         {
-            var match = Regex.Match( tbTime.Text, "^(?<hours>\\d+):(?<minutes>[0-5]?\\d)$" );
+            var match = Regex.Match( tbTime.Text, "^(?<hours>\\d+):(?<minutes>\\d+)$" );
             if ( match.Success )
             {
-                time = Int32.Parse( match.Groups["hours"].Value ) * 60 + Int32.Parse( match.Groups["minutes"].Value );
-                config.time = tbTime.Text;
+                GoalTime = Int32.Parse( match.Groups["hours"].Value ) * 60 + Int32.Parse( match.Groups["minutes"].Value );
+                config.GoalTime = tbTime.Text;
+                config.GoalTimeMins = GoalTime;
             }
             else
             {
                 tbTime.Text = "h:mm";
-                time = 0;
+                GoalTime = 0;
             }
             
+        }
+
+        public void revive()
+        {
+            Visibility = Visibility.Visible;
+        }
+
+        private void cbUseRandom_Checked( object sender, RoutedEventArgs e )
+        {
+            config.UseRandomText = cbUseRandom.IsChecked == true;
+        }
+
+        private void cbUsePercentages_Checked( object sender, RoutedEventArgs e )
+        {
+            config.UsePercentages = cbUsePercentages.IsChecked == true;
+        }
+
+        private void cbStudyMode_Checked( object sender, RoutedEventArgs e )
+        {
+            config.StudyMode = cbStudyMode.IsChecked == true;
+        }
+
+        private void tbPopUpTime_LostFocus( object sender, EventArgs e )
+        {
+            ParsePopUpTime();
+        }
+
+        private void ParsePopUpTime()
+        {
+            var match = Regex.Match( tbPopUpTime.Text, "^\\d+$" );
+            if ( match.Success )
+            {
+                PopUpTime = Int32.Parse( tbPopUpTime.Text );
+                config.PopUpTime = tbPopUpTime.Text;
+            }
+            else
+            {
+                tbPopUpTime.Text = "0";
+                PopUpTime = 0;
+            }
+            PopUpTime = Int32.Parse( tbPopUpTime.Text );
+            config.PopUpTimeMins = PopUpTime;
         }
     }
 }
